@@ -4,7 +4,7 @@
 <style>
 html,body{margin:0;background:#000;height:100%}
 body{display:flex;align-items:center;justify-content:center}
-canvas{cursor:none;height:100vh;max-width:100vw;aspect-ratio:4/3;image-rendering:pixelated;background:#000}
+canvas{cursor:none;width:min(100vw,calc(100vh*4/3));aspect-ratio:4/3;image-rendering:pixelated;background:#000}   /* 320x400 mode X was shown on a 4:3 monitor: non-square pixels */
 #go{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa;font:16px monospace;cursor:pointer}
 </style>
 <canvas id="c" width="320" height="400"></canvas>
