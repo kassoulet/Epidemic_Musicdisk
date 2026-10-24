@@ -101,7 +101,7 @@ function* intro(){
 function drawGold(){for(let y=0;y<H;y++){const row=(gStart+(y>>1)*320);for(let x=0;x<W;x++)fb[y*W+x]=V[(row+(x>>2))&0xffff]}}
 function drawHead(){const r0=hPos>>16;for(let y=0;y<H;y++){const vr=r0+(y>>1);for(let x=0;x<W;x++)fb[y*W+x]=vr>=200&&vr<400?HEAD[(vr-200)*W+x]:0}}
 function startMain(){tTitle=tComm='off';seq=mainStart()}
-function* mainStart(){busy=true;load(0).then(()=>busy=false);yield* screenFade(META.pal.main,'in');yield* fadeText('title','in');yield* fadeText('comm','in')}
+function* mainStart(){yield* screenFade(META.pal.main,'in');yield* fadeText('title','in');yield* fadeText('comm','in')}
 
 // ---- mouse (0x10e44): rat cursor, 9 button hit boxes, click point = cursor x+5, y; busy cursor while a song loads ----
 const SP=META.sprites, BTN=META.buttons, BTN_KEYS=['F2','F3','F4','F5','F6','F7','F8','F9','F10'];
@@ -154,7 +154,7 @@ const DEBUG=/^#(main|help)/.test(location.hash);
 let frameNo=0;
 function frame(){
   frameNo++;
-  if(DEBUG&&cp)document.title=`o${cp.order} r${cp.row} t${cp.currentTime?.toFixed(1)} lv${[...level.slice(0,6)].map(v=>v|0)}`;
+  if((DEBUG||location.hash==='#intro')&&cp)document.title=`o${cp.order} r${cp.row} t${cp.currentTime?.toFixed(1)} lv${[...level.slice(0,6)].map(v=>v|0)}`;
   if(seq&&seq.next().done){seq=null;if(pending){const k=pending;pending=null;key(k)}}
   if(scene==='main')drawMain();
   else if(scene==='help'){fb.set(HELP);dac.set(META.pal.help);if(tFade)fade(tFade[0],tFade[2],tFade[1]==='out')}
@@ -183,7 +183,7 @@ function key(k){
   else if(k==='F10'||k==='Escape')stopAudio();
   else{const i='123456789qwertyuio'.indexOf(k.toLowerCase());if(k.length===1&&i>=0&&i!==song)seq=changeSong(i)}}
 let started=false;
-function start(){if(started)return;started=true;document.getElementById('go').remove();initAudio();seq=intro()}
+function start(){if(started)return;started=true;document.getElementById('go').remove();initAudio();load(0);seq=intro()}   // the intro tune starts with the intro (emulator: first note at tick 22), not with the player screen
 addEventListener('pointerdown',start);
 if(location.hash==='#intro'){start();setTimeout(()=>{for(let i=0;i<+(location.search.slice(1)||100);i++)frame()},500)}
 if(DEBUG){start();seq=null;scene='main';startMain();setTimeout(()=>{for(let i=0;i<600;i++)frame();const dk=location.hash.split(':')[1];if(location.hash==='#help')key('F1');else if(dk)key(dk);for(let i=0;i<+(location.search.slice(1)||800);i++)frame()},1500)}   // debug: skip the intro, fast-forward N frames
