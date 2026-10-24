@@ -1,0 +1,193 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Epidemic - (c)1994 Renaissance/iCE</title>
+<style>
+html,body{margin:0;background:#000;height:100%}
+body{display:flex;align-items:center;justify-content:center}
+canvas{cursor:none;height:100vh;max-width:100vw;aspect-ratio:4/3;image-rendering:pixelated;background:#000}
+#go{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa;font:16px monospace;cursor:pointer}
+</style>
+<canvas id="c" width="320" height="400"></canvas>
+<div id="go">click or press a key to start</div>
+<script type="module">
+import {parseS3M} from './s3m.js';
+import {ChiptuneJsPlayer} from './vendor/chiptune3.js';   // libopenmpt in an AudioWorklet
+const W=320,H=400, FPS=70;                         // mode X 320x400, one tick per vertical retrace
+const IDS=['intro','forever','passage','moonglow','donhuono','stompy','torch','escape','triumph','essence','soon','intrepid','hypercontrol','introspection','frombeyond','splitsecond','nova','datajack'];
+const META=await (await fetch('assets/meta.json')).json(), S=META.songs, GL=META.glyphs;
+const bin=async n=>new Uint8Array(await (await fetch('assets/'+n+'.bin')).arrayBuffer());
+const [MAIN,ICE,HELP,LOGO,HEAD]=await Promise.all(['main','ice','help','logo','head'].map(bin));
+
+// ---- indexed framebuffer + VGA DAC (6-bit) ----
+const cv=document.getElementById('c'), g=cv.getContext('2d'), img=g.createImageData(W,H), px=new Uint32Array(img.data.buffer);
+const fb=new Uint8Array(W*H), dac=new Uint8Array(768), pal32=new Uint32Array(256);
+const fade=(base,t,out)=>{for(let i=0;i<768;i++)dac[i]=out?Math.max(0,base[i]-t):Math.min(base[i],t)}; // VGA fades step the DAC by 1 per frame
+const show=()=>{for(let i=0;i<256;i++){const c=k=>Math.round(dac[i*3+k]*255/63);pal32[i]=0xff000000|c(2)<<16|c(1)<<8|c(0)}
+  for(let i=0;i<W*H;i++)px[i]=pal32[fb[i]];g.putImageData(img,0,0)};
+const blit=(src,sw,sh,dx,dy,key=-1)=>{for(let y=0;y<sh;y++){const Y=y+dy;if(Y<0||Y>=H)continue;for(let x=0;x<sw;x++){const X=x+dx,v=src[y*sw+x];if(X>=0&&X<W&&v!==key)fb[Y*W+X]=v}}};
+const dot=(x,y,v)=>{if(x>=0&&x<W&&y>=0&&y<H)fb[y*W+x]=v};
+function text(font,s,x0,y0){let x=x0,y=y0;   // glyphs come from the original blitters: 5px advance, '\n' = +16 rows
+  for(const ch of s){const gl=GL[font][ch.charCodeAt(0)];
+    if(gl){const p=gl[1];for(let i=0;i<p.length;i+=3)dot(x+p[i],y+p[i+1],p[i+2])}
+    x+=5;if(ch==='\n'){x=x0;y+=16}}}
+
+// ---- audio: libopenmpt renders; the VU levels are derived from the pattern data at the reported order/row ----
+let ac,cp,ready,mod=null,playing=false,paused=false,lastRow=-1;
+const level=new Float32Array(32), chIns=new Uint8Array(32);
+function initAudio(){ac=new AudioContext();ac.resume();cp=new ChiptuneJsPlayer({context:ac,repeatCount:-1,interpolationFilter:8,stereoSeparation:100});   // 8 = windowed-sinc (highest libopenmpt resampler)
+ cp.gain.connect(ac.destination);
+  ready=new Promise(r=>cp.onInitialized(r));cp.onProgress(onPos)}
+// VU levels as in the original engine (0x3f09..0x4118, tick code): level (byte) = instrument default volume when a row names an instrument,
+// the volume column when present, fine D slides at row start, D slides every tick; -1 per engine tick (tempo*0.4 Hz); bars: level*0xb4>>8 rows
+const vol=new Int16Array(32), slide=new Int8Array(32), memo=new Uint8Array(32);
+let speed=6,tempo=125,tickIdx=0,tickAcc=0;
+function onPos({pattern,row}){
+  const key=pattern*64+row;if(key===lastRow||!mod)return;lastRow=key;tickIdx=0;
+  const ev=mod.pats[pattern]?.[row]||[];slide.fill(0);
+  for(let c=0;c<32;c++){const e=ev[c];if(!e||!mod.enabled[c])continue;
+    if(e.cmd===1&&e.par)speed=e.par;else if(e.cmd===20&&e.par>=32)tempo=e.par;
+    if(e.ins){chIns[c]=e.ins;vol[c]=level[c]=mod.insVol[e.ins-1]||0}
+    if(e.vol>=0)vol[c]=level[c]=e.vol;
+    if(e.cmd===4||e.cmd===11||e.cmd===12){                     // D, K, L: volume slide
+      const p=e.par||memo[c];memo[c]=p;const x=p>>4,y=p&15;
+      if(y===15&&x){vol[c]=Math.min(63,vol[c]+x);level[c]=vol[c]}
+      else if(x===15&&y){vol[c]=Math.max(0,vol[c]-y);level[c]=vol[c]}
+      else if(!y)slide[c]=x;else if(!x)slide[c]=-y}}}
+function engineTicks(){                                         // called once per 70 Hz frame
+  tickAcc+=tempo*0.4/FPS;
+  while(tickAcc>=1){tickAcc--;tickIdx++;
+    for(let c=0;c<32;c++){if(level[c]>0)level[c]--;
+      if(slide[c]&&tickIdx<speed){vol[c]=Math.max(0,Math.min(63,vol[c]+slide[c]));level[c]=vol[c]}}}}
+async function load(i){
+  const b=await (await fetch(`songs/${IDS[i]}.s3m`)).arrayBuffer();await ready;
+  mod=parseS3M(b);level.fill(0);vol.fill(0);slide.fill(0);chIns.fill(0);lastRow=-1;speed=mod.speed;tempo=mod.tempo;tickAcc=0;paused=false;playing=true;cp.play(b)}
+const stopAudio=()=>{playing=paused=false;cp?.stop()};
+function jumpOrder(d){let o=cp.order;do o=(o+d+mod.orders.length)%mod.orders.length;while(mod.orders[o]>=254);cp.setOrderRow(o,0);lastRow=-1}
+
+// ---- state: a generator drives the blocking fade sequences of the original, one yield = one frame ----
+let song=0, shown=0, tTitle='on', tComm='on', tFade=0, scene='black', pending=null, seq=null, helpKey=false;
+const TITLE_PAL=[0xa0,16], COMM_PAL=[0xca,4];          // palette ranges faded for the text (title+author / comment)
+function* wait(n){for(let i=0;i<n;i++)yield}
+function* fadeText(which,dir){for(let t=1;t<=64;t++){if(which==='title')tTitle=[dir,t];else tComm=[dir,t];yield}
+  if(which==='title')tTitle=dir==='in'?'on':'off';else tComm=dir==='in'?'on':'off'}
+function* changeSong(i){                              // 0x10530: fade title, fade comment, switch song, fade title, fade comment
+  yield* fadeText('title','out');yield* fadeText('comm','out');
+  song=i;shown=i;busy=true;let done=false;load(i).then(()=>done=true);while(!done)yield;busy=false;   // busy cursor while loading (0xa3a1)
+  yield* wait(2);yield* fadeText('title','in');yield* fadeText('comm','in')}
+function* screenFade(base,dir){for(let t=1;t<=64;t++){tFade=[base,dir,t];yield}tFade=dir==='in'?null:[base,'out',64]}
+function* helpScreen(){                               // F1: fade main out, help in, wait key, back
+  yield* screenFade(META.pal.main,'out');scene='help';yield* screenFade(META.pal.help,'in');
+  helpKey=false;while(!helpKey)yield;yield* screenFade(META.pal.help,'out');scene='main';yield* screenFade(META.pal.main,'in')}
+
+// ---- intro: ported from the 32-bit code (0xef83..0xf27d, 0xff00, 0xff8b) ----
+const V=new Uint8Array(65536);                          // gold phase: one byte per plane offset (all 4 planes get the same value)
+let gStart=0, hPos=0, hVel=0, icY=0;
+function* intro(){
+  // 1) ICE & REN PRESENT: CRTC start +0xa0 (2 rows) per frame for 200 frames, palette fades in meanwhile, hold 100, fade out 64
+  scene='ice';for(let f=0;f<200;f++){tFade=[META.pal.ice,'in',Math.min(64,f+1)];icY=400-2*(f+1);yield}
+  for(let f=0;f<100;f++){tFade=[META.pal.ice,'in',64];yield}
+  for(let t=1;t<=64;t++){tFade=[META.pal.ice,'out',t];yield}
+  // 2) one source column per frame (rows 111..160 of the logo, 4 VRAM rows each, plane-byte column x+0x50), scroll start = x+1
+  scene='gold';V.fill(0);tFade=[META.pal.logo,'in',64];
+  for(let x=0;x<400;x++){
+    for(let r=0;r<50;r++)for(let k=0;k<4;k++)V[(4*r+k)*320+x+0x50]=x<320?LOGO[(111+r)*320+x]:0;
+    gStart=x+1;yield}
+  // 3) head graphic dropped from row 370 and bounced on row 170 (16.16 fixed point, gravity 0.125/frame, restitution 5/8)
+  scene='head';tFade=[META.pal.head,'in',64];hPos=0x1720000;hVel=-0x20000;
+  for(let f=0;f<300;f++){
+    yield;hVel-=0x2000;hPos+=hVel;if(hPos<=0xaa0000){hPos=0xaa0000;hVel=((-hVel)>>3)*5}}
+  for(let t=1;t<=64;t++){tFade=[META.pal.head,'out',t];yield}
+  tFade=null;scene='main';startMain()}
+function drawGold(){for(let y=0;y<H;y++){const row=(gStart+(y>>1)*320);for(let x=0;x<W;x++)fb[y*W+x]=V[(row+(x>>2))&0xffff]}}
+function drawHead(){const r0=hPos>>16;for(let y=0;y<H;y++){const vr=r0+(y>>1);for(let x=0;x<W;x++)fb[y*W+x]=vr>=200&&vr<400?HEAD[(vr-200)*W+x]:0}}
+function startMain(){tTitle=tComm='off';seq=mainStart()}
+function* mainStart(){busy=true;load(0).then(()=>busy=false);yield* screenFade(META.pal.main,'in');yield* fadeText('title','in');yield* fadeText('comm','in')}
+
+// ---- mouse (0x10e44): rat cursor, 9 button hit boxes, click point = cursor x+5, y; busy cursor while a song loads ----
+const SP=META.sprites, BTN=META.buttons, BTN_KEYS=['F2','F3','F4','F5','F6','F7','F8','F9','F10'];
+let mx=160,my=200,mouseIn=false,curFrame=0,busy=false,pressed=-1;
+const sprite=(s,x,y)=>{for(let j=0;j<s.h;j++)for(let i=0;i<s.w;i++){const v=s.p[j*s.w+i];if(v>=0)dot(x+s.x+i,y+s.y+j,v)}};
+const toPix=e=>{const r=cv.getBoundingClientRect();mx=Math.floor((e.clientX-r.left)/r.width*W);my=Math.floor((e.clientY-r.top)/r.height*H)};
+cv.addEventListener('mousemove',e=>{toPix(e);mouseIn=true;curFrame=(curFrame+1)&7});
+cv.addEventListener('mouseleave',()=>{mouseIn=false;pressed=-1});
+cv.addEventListener('mousedown',e=>{if(e.button!==0)return;toPix(e);
+  if(!started){start();return}
+  if(scene==='help'){key('click');return}
+  if(scene!=='main')return;
+  pressed=BTN.findIndex(([y0,y1,x0,x1])=>my>=y0&&my<=y1&&mx+5>=x0&&mx+5<=x1);
+  if(pressed>=0)key(BTN_KEYS[pressed])});
+addEventListener('mouseup',()=>{pressed=-1});
+
+// ---- main screen ----
+// lower pane: 64 particles (0x122da): 16-bit x,y, velocity + acceleration; wall hits negate the velocity, a y overflow clamps to the floor
+const stars=META.stars.map(([c,x,y,ax,ay,vx,vy])=>({c,x,y,ax,ay,vx,vy}));
+const u16=v=>v&0xffff, s16=v=>(v<<16)>>16;
+function stepStars(){for(const s of stars){
+  let vy=s16(s.vy),y=s.y+u16(vy),cy=y>0xffff;y=u16(y);
+  if(vy<0?!cy:cy){s.vy=u16(-vy);y=0xffff}
+  s.y=y;s.vy=u16(s.vy+s.ay);
+  let vx=s16(s.vx),x=s.x+u16(vx),cx=x>0xffff;x=u16(x);
+  if(vx<0?!cx:cx){s.vx=u16(-vx);x=vx<0?0:0xffff}
+  s.x=x;s.vx=u16(s.vx+s.ax)}}
+function drawMain(){
+  fb.set(MAIN);
+  const base=Uint8Array.from(META.pal.main);                  // text colours fade through the DAC (targets live outside the palette)
+  base.set(META.text.title,TITLE_PAL[0]*3);base.set(META.text.comment,COMM_PAL[0]*3);
+  const ft=(st,[o,n])=>{if(st==='on')return;for(let i=o;i<o+n;i++)for(let k=0;k<3;k++){const j=i*3+k;base[j]=st==='off'?0:st[0]==='out'?Math.max(0,base[j]-st[1]):Math.min(base[j],st[1])}};
+  ft(tTitle,TITLE_PAL);ft(tComm,COMM_PAL);
+  const f=tFade&&tFade[0]===META.pal.main?tFade:null;
+  if(f)fade(base,f[2],f[1]==='out');else dac.set(base);
+  // song position strip: 32 cells, one highlighted
+  const hi=Math.floor(shown*31/17);for(let k=0;k<32;k++)for(let y=24;y<28;y++)for(let x=0;x<8;x++)dot(32+k*8+x,y,k===hi?0x63:0x6e);
+  text('comment',S[shown].note.replace(/\r/g,''),80,37);
+  // VU bars (original: 8px wide, 12px pitch, every other row, level*180>>8 rows, colours 0xd3+row)
+  const chs=mod?[...mod.enabled.keys()].filter(c=>mod.enabled[c]).slice(0,16):[];
+  engineTicks();
+  chs.forEach((c,k)=>{const x0=76+4*(16-chs.length)+12*k,rows=(level[c]*0xb4)>>8;
+    for(let j=0;j<45;j++)for(let x=0;x<8;x++)dot(x0+x,122-2*j,j<rows?0xd3+j:0)});
+  text('title',S[shown].title,94,236);text('title',S[shown].by,94,263);
+  stepStars();for(const s of stars)dot(92+((s.x*0x88)>>>16),282+((s.y*0x49)>>>16),s.c)
+  BTN.forEach(([y0,,x0],i)=>sprite(SP[`btn${i}${pressed===i?'p':'n'}`],x0,y0));
+  if(mouseIn)sprite(SP[busy?`cur${4+(frameNo/10&1)}`:`cur${[0,0,1,1,2,2,3,3][curFrame]}`],mx,my);
+}
+const DEBUG=/^#(main|help)/.test(location.hash);
+let frameNo=0;
+function frame(){
+  frameNo++;
+  if(DEBUG&&cp)document.title=`o${cp.order} r${cp.row} t${cp.currentTime?.toFixed(1)} lv${[...level.slice(0,6)].map(v=>v|0)}`;
+  if(seq&&seq.next().done){seq=null;if(pending){const k=pending;pending=null;key(k)}}
+  if(scene==='main')drawMain();
+  else if(scene==='help'){fb.set(HELP);dac.set(META.pal.help);if(tFade)fade(tFade[0],tFade[2],tFade[1]==='out')}
+  else if(scene==='ice'){fb.fill(0);blit(ICE,W,H,0,icY);fade(tFade[0],tFade[2],tFade[1]==='out')}
+  else if(scene==='gold'){drawGold();fade(tFade[0],tFade[2],tFade[1]==='out')}
+  else if(scene==='head'){drawHead();fade(tFade[0],tFade[2],tFade[1]==='out')}
+  else{fb.fill(0);dac.fill(0)}
+  show()}
+let acc=0,last=performance.now();
+(function loop(now){acc+=(now-last)*FPS/1000;last=now;for(let n=0;acc>=1&&n<5;n++,acc--)frame();if(acc>5)acc=0;requestAnimationFrame(loop)})(last);
+
+// ---- keys (scan table in the EXE: F1..F10 -> 1..10; digits 1-9 and Q..O pick songs) ----
+function key(k){
+  if(scene==='help'){helpKey=true;return}
+  if(scene!=='main')return;
+  if(seq){pending=k;return}                            // the original blocks while fading
+  const next=d=>{seq=changeSong((song+d+S.length)%S.length)};
+  if(k==='F1')seq=helpScreen();
+  else if(k==='F2'){if(paused){paused=false;cp.unpause()}else if(!playing)load(song)}
+  else if(k==='F3')stopAudio();
+  else if(k==='F4'){if(playing){paused=!paused;cp.togglePause()}}
+  else if(k==='F5'||k==='ArrowUp'||k==='ArrowLeft'){if(playing)jumpOrder(-1)}
+  else if(k==='F6'||k==='ArrowDown'||k==='ArrowRight'){if(playing)jumpOrder(1)}
+  else if(k==='F7'||k==='-')next(-1);
+  else if(k==='F8'||k==='+'||k==='=')next(1);
+  else if(k==='F10'||k==='Escape')stopAudio();
+  else{const i='123456789qwertyuio'.indexOf(k.toLowerCase());if(k.length===1&&i>=0&&i!==song)seq=changeSong(i)}}
+let started=false;
+function start(){if(started)return;started=true;document.getElementById('go').remove();initAudio();seq=intro()}
+addEventListener('pointerdown',start);
+if(location.hash==='#intro'){start();setTimeout(()=>{for(let i=0;i<+(location.search.slice(1)||100);i++)frame()},500)}
+if(DEBUG){start();seq=null;scene='main';startMain();setTimeout(()=>{for(let i=0;i<600;i++)frame();const dk=location.hash.split(':')[1];if(location.hash==='#help')key('F1');else if(dk)key(dk);for(let i=0;i<+(location.search.slice(1)||800);i++)frame()},1500)}   // debug: skip the intro, fast-forward N frames
+addEventListener('keydown',e=>{e.preventDefault();if(!started){start();return}
+  if(scene!=='main'&&scene!=='help'){if(seq&&['Escape',' ','Enter'].includes(e.key)){seq=null;scene='main';tFade=null;startMain()}return}
+  key(e.key)});
+</script>
