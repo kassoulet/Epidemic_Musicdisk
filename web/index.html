@@ -6,8 +6,13 @@ html,body{margin:0;background:#000;height:100%}
 body{display:flex;align-items:center;justify-content:center}
 canvas{cursor:none;width:min(100vw,calc(100vh*4/3));aspect-ratio:4/3;image-rendering:pixelated;background:#000}   /* 320x400 mode X was shown on a 4:3 monitor: non-square pixels */
 #go{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa;font:16px monospace;cursor:pointer}
+#crt{position:fixed;pointer-events:none;display:none}
+#crtbox{position:fixed;left:10px;bottom:10px;z-index:99;padding:4px 10px;background:rgba(0,0,0,.75);color:#fff;font:13px system-ui,sans-serif;border:1px solid #666;border-radius:4px}
+#crtbox.off{opacity:.4}
 </style>
 <canvas id="c" width="320" height="400"></canvas>
+<div id="crt"></div>
+<label id="crtbox"><input type="checkbox" id="crtcb"> CRT (C)</label>
 <div id="go">click or press a key to start</div>
 <script type="module">
 import {parseS3M} from './s3m.js';
@@ -17,6 +22,25 @@ const IDS=['intro','forever','passage','moonglow','donhuono','stompy','torch','e
 const META=await (await fetch('assets/meta.json')).json(), S=META.songs, GL=META.glyphs;
 const bin=async n=>new Uint8Array(await (await fetch('assets/'+n+'.bin')).arrayBuffer());
 const [MAIN,ICE,HELP,LOGO,HEAD]=await Promise.all(['main','ice','help','logo','head'].map(bin));
+
+// ---- CRT option (display only): scanline overlay, one band per source row, period = k whole device pixels (no moire).
+// The canvas is resized to k*SRC_ROWS device px (4:3) while on; unavailable (k<2) when the window is too small.
+const SRC_ROWS=400, crtEl=document.getElementById('crt'), crtCb=document.getElementById('crtcb'), crtBox=document.getElementById('crtbox'), cvEl=document.getElementById('c');
+let crtOn=false;try{crtOn=localStorage.crt==='1'}catch{}
+function crtLayout(){
+  const d=devicePixelRatio, k=Math.floor(Math.min(innerHeight,innerWidth*3/4)*d/SRC_ROWS), ok=k>=2, on=crtOn&&ok;
+  crtCb.checked=crtOn;crtCb.disabled=!ok;crtBox.classList.toggle('off',!ok);
+  crtBox.title=ok?'CRT scanlines (C)':'Window too small for the CRT effect (needs 2+ device pixels per source row)';
+  cvEl.style.width=cvEl.style.height='';crtEl.style.display='none';
+  if(!on)return;
+  const h=k*SRC_ROWS/d, w=h*4/3;cvEl.style.height=h+'px';cvEl.style.width=w+'px';
+  const r=cvEl.getBoundingClientRect(), p=k/d;
+  Object.assign(crtEl.style,{display:'block',left:r.left+'px',top:r.top+'px',width:w+'px',height:h+'px',
+    background:`radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.15)),linear-gradient(transparent 40%,rgba(0,0,0,.35)) 0 0/100% ${p}px`})}
+function crtSet(v){crtOn=v;try{localStorage.crt=v?'1':'0'}catch{}crtLayout()}
+crtCb.onchange=()=>crtSet(crtCb.checked);
+addEventListener('resize',crtLayout);addEventListener('fullscreenchange',crtLayout);crtLayout();
+matchMedia(`(resolution:${devicePixelRatio}dppx)`).onchange=crtLayout;
 
 // ---- indexed framebuffer + VGA DAC (6-bit) ----
 const cv=document.getElementById('c'), g=cv.getContext('2d'), img=g.createImageData(W,H), px=new Uint32Array(img.data.buffer);
@@ -187,7 +211,7 @@ function start(){if(started)return;started=true;document.getElementById('go').re
 addEventListener('pointerdown',start);
 if(location.hash==='#intro'){start();setTimeout(()=>{for(let i=0;i<+(location.search.slice(1)||100);i++)frame()},500)}
 if(DEBUG){start();seq=null;scene='main';startMain();setTimeout(()=>{for(let i=0;i<600;i++)frame();const dk=location.hash.split(':')[1];if(location.hash==='#help')key('F1');else if(dk)key(dk);for(let i=0;i<+(location.search.slice(1)||800);i++)frame()},1500)}   // debug: skip the intro, fast-forward N frames
-addEventListener('keydown',e=>{e.preventDefault();if(!started){start();return}
+addEventListener('keydown',e=>{e.preventDefault();if(e.key==='c'||e.key==='C'){crtSet(!crtOn);return}if(!started){start();return}
   if(scene!=='main'&&scene!=='help'){if(seq&&['Escape',' ','Enter'].includes(e.key)){seq=null;scene='main';tFade=null;startMain()}return}
   key(e.key)});
 </script>

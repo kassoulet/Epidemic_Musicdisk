@@ -27,6 +27,8 @@ No build step. Needs a browser with AudioWorklet (any current Chrome, Firefox, S
 | F10 / Esc | stop (original: exit to DOS) |
 | Mouse | the seven icons under the screen behave as F2-F8; lower-right icon stops |
 
+`C` (or the CRT checkbox, bottom left) toggles a scanline overlay, off by default and remembered. It is display only: the canvas is sized to a whole number of device pixels per source row (400) so the bands never beat; it is unavailable when the window gives fewer than 2 device pixels per row.
+
 F9 (DOS shell) does nothing in a browser. Esc/Space/Enter skips the intro.
 
 ## What is original and what is not
