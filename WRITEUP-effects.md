@@ -236,5 +236,24 @@ the extracted bitmap (`web/assets/*.bin`, counted), not the palette size (always
 * **Fonts and sprites** have no bitmaps in the file: the glyph in section "6.2" is code (`mov byte [edi], 0xa0+row` ... `ret`). `tools/emu.py ... glyphs / sprites`
   calls each blitter in the emulator and reads the pixels back from the emulated VRAM; the port stores them as `[x, y, colour, ...]` lists (`-1` = untouched in sprites).
 * **The landscape, chrome scroller font and scroller code** (`HIYA! SYNTAX...`) are in the file but not reached in the normal flow; the port does not use them, and I did not decode them further.
-* **Previews:** I did not write PNG previews: the task for this directory limited output to the two write-ups. The bitmaps are in `web/assets/*.bin` (index data) with palettes in
-  `web/assets/meta.json` (`pal`), which is enough to render them in a few lines.
+* **Previews** (rendered for this write-up from `web/assets/*.bin` and the palettes in `meta.json`, 6-bit values scaled to 8-bit; the 320x400 pictures are shown at their native pixel size, not 4:3 corrected):
+
+![player screen, main.bin 320x400](figures/main.png)
+![ICE & REN PRESENT, ice.bin 320x400](figures/ice.png)
+![help screen, help.bin 320x400](figures/help.png)
+![logo band, logo.bin 320x200](figures/logo.png)
+![graffiti head, head.bin 320x200](figures/head.png)
+
+Palettes, 256 entries each (16 x 16 swatches, left to right: main, ice, help, logo, head):
+
+![palettes](figures/palettes.png)
+
+Title font, 89 glyphs (ASCII 33..126) read back from the compiled blitter, drawn as shape only in white (colour indices ignored), 3x:
+
+![title font](figures/font_title.png)
+
+Mouse cursor frames (cur0-3 rat, cur4-5 gem) and the 18 button sprites (normal/pressed pairs), 3x, drawn with the `main` palette (my choice; which palette the live DAC holds at that time was not checked here):
+
+![cursor and button sprites](figures/sprites.png)
+
+The comment font (75 glyphs) is not previewed: my first render of it showed gaps between rows that I did not investigate.
