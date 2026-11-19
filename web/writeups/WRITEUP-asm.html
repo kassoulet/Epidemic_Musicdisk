@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>EPIDEMIC (Renaissance / iCE, 1994) - asm snippets worth
+reading</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+  :root{--bg:#fff;--fg:#1d1d22;--mut:#666;--ac:#c4155a;--code:#f3f3f6;--bd:#d8d8e0}
+  @media (prefers-color-scheme:dark){:root{--bg:#0b0b10;--fg:#d8d8e0;--mut:#9a9aa8;--ac:#ff6a9a;--code:#17171f;--bd:#33333f}}
+  *{box-sizing:border-box}
+  body{margin:0 auto;max-width:62rem;padding:0 16px;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,sans-serif}
+  #wunav{display:flex;gap:16px;flex-wrap:wrap;padding-top:12px;padding-bottom:8px;border-bottom:1px solid var(--bd);font-size:14px}
+  a{color:var(--ac)}
+  h1,h2,h3,h4{line-height:1.25;margin-top:1.8em}
+  img{max-width:100%;height:auto;image-rendering:auto}
+  pre{background:var(--code);border:1px solid var(--bd);border-radius:4px;padding:10px 12px;overflow-x:auto;font-size:13px;line-height:1.4}
+  code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.92em;overflow-wrap:anywhere}
+  pre code{background:none;padding:0;overflow-wrap:normal}
+  table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%}
+  td,th{border:1px solid var(--bd);padding:4px 8px}
+  blockquote{border-left:3px solid var(--bd);margin-left:0;padding-left:14px;color:var(--mut)}
+  #TOC{font-size:14px}#TOC ul{padding-left:1.2em}
+  #TOC>ul{padding-left:0;list-style:none}
+  details#toc-box{margin:12px 0}
+  </style>
+</head>
+<body>
+<nav id="wunav"><a href="../index.html">&larr; the demo</a> <a href="WRITEUP-asm.html">asm</a> <a href="WRITEUP-effects.html">effects</a> <a href="https://github.com/kassoulet/Epidemic_Musicdisk">README on GitHub</a></nav>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a
+href="#epidemic-renaissance--ice-1994---asm-snippets-worth-reading"
+id="toc-epidemic-renaissance--ice-1994---asm-snippets-worth-reading">EPIDEMIC
+(Renaissance / iCE, 1994) - asm snippets worth reading</a>
+<ul>
+<li><a
+href="#1-a-pll-for-the-vertical-retrace-built-from-the-pit-reload-value-0x9200"
+id="toc-1-a-pll-for-the-vertical-retrace-built-from-the-pit-reload-value-0x9200">1.
+A PLL for the vertical retrace, built from the PIT reload value
+(0x9200)</a></li>
+<li><a
+href="#2-using-the-carry-flag-as-the-bounce-test-0x123020x12366-particle-field"
+id="toc-2-using-the-carry-flag-as-the-bounce-test-0x123020x12366-particle-field">2.
+Using the carry flag as the bounce test (0x12302..0x12366, particle
+field)</a></li>
+<li><a
+href="#3-particle-pixel-address-with-no-multiplication-table-0x1236e0x1239d"
+id="toc-3-particle-pixel-address-with-no-multiplication-table-0x1236e0x1239d">3.
+Particle pixel address with no multiplication table
+(0x1236e..0x1239d)</a></li>
+<li><a
+href="#4-saturating-decrement-without-a-branch-sub-1--adc-0-0x3ab2-0x1093b-0x10a12"
+id="toc-4-saturating-decrement-without-a-branch-sub-1--adc-0-0x3ab2-0x1093b-0x10a12">4.
+Saturating decrement without a branch: <code>sub 1 / adc 0</code>
+(0x3ab2, 0x1093b, 0x10a12)</a></li>
+<li><a
+href="#5-one-stosw-paints-8-pixels-vu-bars-in-unchained-mode-0x109a00x109d5"
+id="toc-5-one-stosw-paints-8-pixels-vu-bars-in-unchained-mode-0x109a00x109d5">5.
+One <code>stosw</code> paints 8 pixels: VU bars in unchained mode
+(0x109a0..0x109d5)</a></li>
+<li><a
+href="#6-text-as-code-and-the-plane-carry-trick-0x8f7a0x8ffa-and-the-glyphs"
+id="toc-6-text-as-code-and-the-plane-carry-trick-0x8f7a0x8ffa-and-the-glyphs">6.
+Text as code, and the plane carry trick (0x8f7a..0x8ffa and the
+glyphs)</a></li>
+<li><a href="#7-the-unrolled-column-copy-for-the-gold-zoom-0xf2b00xf954"
+id="toc-7-the-unrolled-column-copy-for-the-gold-zoom-0xf2b00xf954">7.
+The unrolled column copy for the gold zoom (0xf2b0..0xf954)</a></li>
+<li><a href="#8-branch-free-conditional-mask-0x404e0x405d"
+id="toc-8-branch-free-conditional-mask-0x404e0x405d">8. Branch-free
+conditional mask (0x404e..0x405d)</a></li>
+<li><a
+href="#9-fades-by-the-byte-with-saturation-in-the-loop-0x1088f0x108c6"
+id="toc-9-fades-by-the-byte-with-saturation-in-the-loop-0x1088f0x108c6">9.
+Fades by the byte, with saturation in the loop
+(0x1088f..0x108c6)</a></li>
+<li><a
+href="#10-bounce-with-fixed-point-restitution-0xffb40xfff8-the-head"
+id="toc-10-bounce-with-fixed-point-restitution-0xffb40xfff8-the-head">10.
+Bounce with fixed-point restitution (0xffb4..0xfff8, the head)</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1
+id="epidemic-renaissance--ice-1994---asm-snippets-worth-reading">EPIDEMIC
+(Renaissance / iCE, 1994) - asm snippets worth reading</h1>
+<p>All addresses are offsets in the unpacked flat 32-bit segment
+("seg32") of <code>EPIDEMIC.EXE</code> (a LZEXE-style stub, then a
+DOS32-style extender, then the 32-bit program, dumped by
+<code>tools/unpack.py</code> at file-image offset <code>0x2630</code>).
+Listings were produced with capstone (<code>CS_MODE_32</code>) on that
+dump. The one listing taken from the overlay, the glyph, gives a file
+offset instead. Code is 386-era hand-written assembly (no compiler
+idioms: <code>jecxz</code>, <code>loop</code>, <code>stosw</code>,
+<code>rep stosw</code>, <code>mul ah</code>), with the VGA registers
+poked directly. Nothing here is MMX or x87: the whole program is
+integer.</p>
+<p>The material is small (the program is a music disk, about 4,000
+reachable instructions in the UI half, per <code>REVERSE.md</code>), so
+this is a short list of the tricks that are actually verifiable in the
+code.</p>
+<hr />
+<h2
+id="1-a-pll-for-the-vertical-retrace-built-from-the-pit-reload-value-0x9200">1.
+A PLL for the vertical retrace, built from the PIT reload value
+(0x9200)</h2>
+<p>The program does not poll vsync. It reprograms timer 0 and uses IRQ0
+itself as the frame interrupt, then keeps it locked to the retrace with
+a few instructions:</p>
+<pre><code>920a: mov dx, 0x3da
+920e: in  al, dx            ; input status 1
+920f: and eax, 8            ; bit 3 = vertical retrace
+9212: dec eax
+9213: neg eax               ; retrace on: -7     retrace off: +1
+9215: add word [0x9251], ax ; PIT reload value (the divisor), adjusted
+921c: in  al, dx / test al, 8 / je 0x921c   ; wait for the retrace to start
+9221: mov ax, [0x9251]
+9227: out 0x40, al / mov al, ah / out 0x40, al  ; re-arm the PIT with the new divisor
+922d: call 0x106c5          ; draw the frame</code></pre>
+<p><code>and 8 / dec / neg</code> turns a flag bit into +1 or -7 without
+a branch. If the interrupt arrives while the retrace is already on
+(late), the divisor drops by 7; if it arrives before (early) it grows by
+1. The handler then spins until the retrace starts and reloads the PIT
+right there, so the next IRQ0 is one divisor after the start of the
+retrace. It is a first-order tracking loop with asymmetric gain, and the
+frame routine always starts in the retrace. The divisor lives at
+<code>0x9251</code>, which is the 16-bit immediate of an
+<code>mov ax, 0x4100</code> in the 16-bit stub that follows (decoded as
+16-bit code at 0x9250: <code>b8 00 41 e6 40 ...</code>); the stub looks
+like an older real-mode copy of the same handler (it adds to
+<code>cs:[0]</code>, a patched address). I only verified the 32-bit
+handler; the initial divisor in the image is <code>0x4100</code> (a 71.7
+Hz timer rate if the PIT is at 1.193182 MHz, my arithmetic, not read
+from the code).</p>
+<h2
+id="2-using-the-carry-flag-as-the-bounce-test-0x123020x12366-particle-field">2.
+Using the carry flag as the bounce test (0x12302..0x12366, particle
+field)</h2>
+<p>Positions are 16-bit unsigned, velocities are 16-bit signed, and a
+particle must reflect at 0 and at 65535. There is no compare: the add
+that moves it sets the flag.</p>
+<pre><code>1230a: mov cx, [esi+0x10]          ; vy
+1230e: or  cx, cx
+12311: jns 0x1231b
+12313: add [esi+4], cx             ; vy &lt; 0: y += vy ... (unsigned add of a negative = subtract)
+12317: jb  0x1232b                 ; carry out: no underflow happened, keep going
+12319: jmp 0x12321
+1231b: add [esi+4], cx             ; vy &gt;= 0
+1231f: jae 0x1232b                 ; no carry: still inside
+12321: neg word [esi+0x10]         ; wrapped: reverse velocity
+12325: mov word [esi+4], 0xffff    ; and clamp
+1232b: mov cx,[esi+0xc] / add [esi+0x10],cx    ; vy += ay</code></pre>
+<p>For a negative velocity the sixteen-bit add <em>produces</em> a carry
+when the position stays &gt;= 0 (a - |v| in two's complement), and no
+carry exactly when it would have gone below 0. So the <code>jb</code> /
+<code>jae</code> pair, picked by the sign of the velocity, replaces both
+range checks. The code writes <code>0xffff</code> for a wrap on y in
+both directions and <code>0</code> / <code>0xffff</code> on x (0x1234e /
+0x1235c). The JS port transcribes this with explicit <code>cy</code>
+variables, and with the table taken from the EXE it matched 371 recorded
+frames with zero differences (<code>REVERSE.md</code>).</p>
+<h2
+id="3-particle-pixel-address-with-no-multiplication-table-0x1236e0x1239d">3.
+Particle pixel address with no multiplication table
+(0x1236e..0x1239d)</h2>
+<p>Plotting a pixel in mode X needs the plane (<code>x &amp; 3</code>),
+the byte offset (<code>(y*320 + x) &gt;&gt; 2</code>) and a map-mask
+write. Scaling the 16-bit state to the 136x73 pane and addressing happen
+together:</p>
+<pre><code>1236e: movzx eax, word [esi+2]     ; x (16 bit)
+12372: movzx ebx, word [esi+4]     ; y
+12379: imul ebx, ebx, 0x49 / shr ebx, 16     ; y * 73 &gt;&gt; 16
+1237f: imul ebx, ebx, 0x140                   ; * 320 (the row in a linear 320 pitch)
+12385: imul eax, eax, 0x88 / shr eax, 16      ; x * 136 &gt;&gt; 16
+1238e: add ebx, eax / shr ebx, 2              ; byte offset in the plane
+12393: and eax, 3                             ; plane
+12396: mov al, [eax+0xb9a1]                   ; map mask table 01 02 04 08
+1239c: out dx, al                             ; select the plane
+1239d: mov [edi+ebx], cl                      ; pixel</code></pre>
+<p>The scale <code>x*136&gt;&gt;16</code> is a multiply-high instead of
+a division, and because 320 is a multiple of 4 the plane number is just
+the low two bits of x after scaling, so <code>&amp; 3</code> on the
+<em>scaled</em> x selects the plane for the whole linear address.
+Erasing (0x123ab) is cheaper still: it sets the map mask once to
+<code>0xf</code> (<code>mov ax,0xf02 / out dx,ax</code>) and clears each
+old pixel with a single byte write, which hits all four planes. It
+relies on the background being colour 0 in that pane.</p>
+<h2
+id="4-saturating-decrement-without-a-branch-sub-1--adc-0-0x3ab2-0x1093b-0x10a12">4.
+Saturating decrement without a branch: <code>sub 1 / adc 0</code>
+(0x3ab2, 0x1093b, 0x10a12)</h2>
+<p>The VU levels decay by 1 per engine tick, stopping at 0:</p>
+<pre><code>3aad: mov ebp, 0x1f
+3ab2: sub byte [ebp+0x1615], 1     ; borrow if it was 0
+3aba: adc byte [ebp+0x1615], 0     ; give it back
+3ac2: dec ebp / jns 0x3ab2         ; 32 channels</code></pre>
+<p><code>sub x,1</code> sets the carry only when x was 0 (result 0xff);
+<code>adc x,0</code> then adds that borrow back and yields 0 again. In
+two instructions, with no compare or jump, the byte saturates at 0. The
+same pair appears in the display routine for the first 16 levels
+(0x1093b..0x1094a) and for a one-shot counter at <code>[0xa39d]</code>
+(0x10a12). The sequence relies on both operations being in memory (a
+read-modify-write on a byte table), which on a 386 is cheaper than
+loading, testing and branching.</p>
+<h2
+id="5-one-stosw-paints-8-pixels-vu-bars-in-unchained-mode-0x109a00x109d5">5.
+One <code>stosw</code> paints 8 pixels: VU bars in unchained mode
+(0x109a0..0x109d5)</h2>
+<pre><code>109a0: movzx eax, byte [esi+0x1615]        ; channel level
+109a7: mov ah, 0xb4 / mul ah / shr eax, 8  ; level * 180 &gt;&gt; 8 = number of steps
+109b2: mov al, 0xd3 / mov ah, al           ; colour, in both bytes
+109b9: stosw                               ; two bytes = 8 pixels (map mask 0xf)
+109bb: sub edi, ebx                        ; ebx = 0xa2: net -0xa0 = two rows up
+109bd: inc al / mov ah, al / loop 0x109b9  ; next colour of the gradient
+109c3: mov ecx,0x2d / sub cl, dl / jecxz / xor ax,ax ... stosw ...  ; clear the rest of the 45 steps</code></pre>
+<p>With the sequencer map mask left at <code>0xf</code> (set once at
+0x1096d), every VRAM byte is four identical pixels, so a 2-byte
+<code>stosw</code> is an 8-pixel segment and the <code>-0xa2</code>
+after the 2-byte advance steps the pointer up by exactly one <em>every
+other</em> row (pitch <code>0xa0</code> bytes, two scan lines of 80).
+The scale <code>*0xb4 &gt;&gt; 8</code> is <code>mul ah</code> with the
+constant loaded into <code>ah</code> (an 8x8 -&gt; 16 multiply in one
+instruction), and the clear loop uses <code>jecxz</code> to skip when a
+bar is full. The bar's colour ramp (<code>0xd3 + step</code>) is a
+palette gradient, so the loop is also the shading.</p>
+<h2
+id="6-text-as-code-and-the-plane-carry-trick-0x8f7a0x8ffa-and-the-glyphs">6.
+Text as code, and the plane carry trick (0x8f7a..0x8ffa and the
+glyphs)</h2>
+<p>The small fonts are not bitmaps. In the overlay each glyph (file
+offset <code>0x1be90</code> = <code>len(EXE) - 0x1f489</code>, the start
+of the first of the two font blobs; I did not check which font it is) is
+a header plus a straight-line routine:</p>
+<pre><code> out dx, al                       ; select the plane (al = map mask)
+ mov byte [edi], 0xa0             ; row 0, pixel in this plane
+ mov byte [edi+0x50], 0xa1        ; next row (pitch is 0x50 bytes)
+ add edi, 0xa0                    ; down 2 rows
+ mov byte [edi], 0xa2 ...
+ ...
+ rol al, 1                        ; next plane
+ out dx, al
+ adc edi, 0xfffffce0              ; rewind to the top row, +1 byte if the plane wrapped
+ mov byte [edi], 0xaa ...
+ ...
+ ret</code></pre>
+<p>(Taken from the overlay: the header bytes are
+<code>c2 00 05 0c 61 ...</code>, a 194-byte routine, width 5, height 12,
+ASCII 0x61; the colour constants <code>0xa0 + row</code> are the title
+gradient. The <code>0xfffffce0</code> is <code>-0x320</code> =
+<code>-5 * 0xa0</code>.) The caller prepares the mask:</p>
+<pre><code>8fe8: and ebx, 3                  ; x &amp; 3 = starting plane
+8feb: mov al, [ebx+0x8fb8]        ; 01 02 04 08
+8ff1: shl al, 4
+8ff4: or  al, [ebx+0x8fb8]        ; the nibble is duplicated: 0x11, 0x22, 0x44, 0x88
+8ffa: call esi                    ; call the glyph</code></pre>
+<p>Why the mask is duplicated: <code>rol al,1</code> moves the plane bit
+up one place, and after plane 3 the <em>high</em> nibble copy
+<code>0x88</code> rotates into <code>0x11</code> with the carry set. So
+the <code>adc edi, imm</code> that follows each <code>rol/out</code>
+adds 1 to the destination only when the glyph crossed a 4-pixel byte
+boundary, with no test at all. The glyph code is then position
+independent in x (any <code>x &amp; 3</code> start works with the same
+code), and no pixel is ever masked or shifted at run time: every pixel
+is a <code>mov byte [edi+k], imm8</code> with a constant colour. The
+cost is memory (about 0x23a0 bytes of code for one font), which a music
+disk with 3 MB of modules does not care about. The port could not reuse
+this directly (it cannot run x86), so <code>tools/emu.py</code> calls
+each glyph in the emulator and the port keeps the pixel lists.</p>
+<h2 id="7-the-unrolled-column-copy-for-the-gold-zoom-0xf2b00xf954">7.
+The unrolled column copy for the gold zoom (0xf2b0..0xf954)</h2>
+<pre><code>f2b0: mov al, [esi]                   ; one source pixel (a column of the logo)
+f2b2: mov [edi], al                   ; written to 4 rows: this is the 4x vertical repeat
+f2b4: mov [edi+0x140], al
+f2ba: mov [edi+0x280], al
+f2c0: mov [edi+0x3c0], al
+f2c6: add esi, 0x140                  ; next logo row (pitch 320)
+f2cc: add edi, 0x500                  ; next group of 4 VRAM rows
+ ... (50 copies: rows 111-160)</code></pre>
+<p>The loop over the 50 rows is unrolled completely (counted: 50 loads
+between 0xf28f and 0xf954), with constant displacements for the 4 rows,
+so each source pixel costs one load, four stores and two adds, no loop
+counter. Entry is guarded by
+<code>cmp [0xef73],0x13f / ja 0xf959</code>, which switches to the same
+structure with <code>mov byte [edi+k], 0</code> once the column index
+exceeds 319 so the trail clears. Because the sequencer map mask is
+<code>0xf</code> and CRTC register 9 doubles scan lines (set at 0xf141),
+those stores produce a 4-pixel-wide, 8-line-tall block per source pixel:
+the zoom is the VGA doing the work.</p>
+<h2 id="8-branch-free-conditional-mask-0x404e0x405d">8. Branch-free
+conditional mask (0x404e..0x405d)</h2>
+<pre><code>404e: test byte [ebp+0x1224], 4
+4056: setne al
+4059: xor ah, ah
+405b: sub ah, al                   ; ah = 0 or 0xff
+405d: and [ebp+0x1204], ah         ; clear the field if the flag was clear</code></pre>
+<p><code>setne</code> then <code>0 - al</code> builds a byte mask (0x00
+/ 0xff) from a flag, and the <code>and</code> conditionally keeps or
+clears a channel byte with no jump. The same shape repeats for the next
+channel field (0x4064..). It appears in the part of the engine that
+clears per-channel state for a new row.</p>
+<h2
+id="9-fades-by-the-byte-with-saturation-in-the-loop-0x1088f0x108c6">9.
+Fades by the byte, with saturation in the loop (0x1088f..0x108c6)</h2>
+<pre><code>1088f: mov ecx, 0x300              ; 768 DAC bytes
+10894: mov bl, [0x9d85]            ; step (1 in the image)
+108a3: sub [esi], bl               ; fade out: component -= step
+108a5: jae 0x108aa
+108a7: mov byte [esi], 0           ;   clamp to 0
+...
+108b5: add [esi], bl               ; fade in: component += step
+108b7: mov al, [ebp]               ;   target palette byte
+108bb: cmp [esi], al
+108bd: jbe 0x108c1
+108bf: mov [esi], al               ;   clamp to the target</code></pre>
+<p>Nothing exotic: the point is the design. The target palette is kept
+as-is, a working copy is stepped, and the upload goes out in two halves
+of <code>0x180</code> bytes (<code>out 0x3c8, 0</code> then
+<code>out 0x3c8, 0x80</code>, 128 entries per frame) so that it fits in
+the retrace. The fade-in clamp against the target means the same routine
+fades any of the five palettes. I did not re-derive from this code that
+a fade lasts 64 frames; that number comes from the emulator measurement
+in <code>REVERSE.md</code>.</p>
+<h2
+id="10-bounce-with-fixed-point-restitution-0xffb40xfff8-the-head">10.
+Bounce with fixed-point restitution (0xffb4..0xfff8, the head)</h2>
+<pre><code>ffb4: sub dword [0xef77], 0x2000      ; vel -= 0.125 (16.16)
+ffc3: add [0xef73], eax               ; pos += vel
+ffc9: cmp dword [0xef73], 0xaa0000    ; floor at row 170
+ffdf: neg dword [0xef77]
+ffe5: sar dword [0xef77], 3           ; /8
+fff6: imul ebx  (ebx = 5)             ; *5  =&gt; -vel*5/8</code></pre>
+<p>Gravity and restitution in four integer instructions;
+<code>sar 3</code> then <code>imul 5</code> is <code>*5/8</code> with
+truncation toward minus infinity, which the JS port keeps
+(<code>((-hVel)&gt;&gt;3)*5</code>). The result
+<code>(pos &gt;&gt; 16) * 0x50</code> is written to the CRTC
+start-address registers (0xff8c..0xffb3), so the whole animation is a
+register write per frame.</p>
+</body>
+</html>

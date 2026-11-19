@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>EPIDEMIC (Renaissance / iCE, 1994) - effects, display tricks
+and what is exact</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+  :root{--bg:#fff;--fg:#1d1d22;--mut:#666;--ac:#c4155a;--code:#f3f3f6;--bd:#d8d8e0}
+  @media (prefers-color-scheme:dark){:root{--bg:#0b0b10;--fg:#d8d8e0;--mut:#9a9aa8;--ac:#ff6a9a;--code:#17171f;--bd:#33333f}}
+  *{box-sizing:border-box}
+  body{margin:0 auto;max-width:62rem;padding:0 16px;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,sans-serif}
+  #wunav{display:flex;gap:16px;flex-wrap:wrap;padding-top:12px;padding-bottom:8px;border-bottom:1px solid var(--bd);font-size:14px}
+  a{color:var(--ac)}
+  h1,h2,h3,h4{line-height:1.25;margin-top:1.8em}
+  img{max-width:100%;height:auto;image-rendering:auto}
+  pre{background:var(--code);border:1px solid var(--bd);border-radius:4px;padding:10px 12px;overflow-x:auto;font-size:13px;line-height:1.4}
+  code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.92em;overflow-wrap:anywhere}
+  pre code{background:none;padding:0;overflow-wrap:normal}
+  table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%}
+  td,th{border:1px solid var(--bd);padding:4px 8px}
+  blockquote{border-left:3px solid var(--bd);margin-left:0;padding-left:14px;color:var(--mut)}
+  #TOC{font-size:14px}#TOC ul{padding-left:1.2em}
+  #TOC>ul{padding-left:0;list-style:none}
+  details#toc-box{margin:12px 0}
+  </style>
+</head>
+<body>
+<nav id="wunav"><a href="../index.html">&larr; the demo</a> <a href="WRITEUP-asm.html">asm</a> <a href="WRITEUP-effects.html">effects</a> <a href="https://github.com/kassoulet/Epidemic_Musicdisk">README on GitHub</a></nav>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a
+href="#epidemic-renaissance--ice-1994---effects-display-tricks-and-what-is-exact"
+id="toc-epidemic-renaissance--ice-1994---effects-display-tricks-and-what-is-exact">EPIDEMIC
+(Renaissance / iCE, 1994) - effects, display tricks and what is
+exact</a>
+<ul>
+<li><a href="#0-exact-against-approximated"
+id="toc-0-exact-against-approximated">0. Exact against
+approximated</a></li>
+<li><a href="#1-display-and-timing" id="toc-1-display-and-timing">1.
+Display and timing</a></li>
+<li><a href="#2-intro-part-1---ice--ren-present-0xef83"
+id="toc-2-intro-part-1---ice--ren-present-0xef83">2. Intro, part 1 -
+"ICE &amp; REN PRESENT" (0xef83..)</a></li>
+<li><a
+href="#3-intro-part-2---the-gold-epidemic-zoom-0xf130-column-routine-at-0xf27e"
+id="toc-3-intro-part-2---the-gold-epidemic-zoom-0xf130-column-routine-at-0xf27e">3.
+Intro, part 2 - the gold "EPIDEMIC" zoom (0xf130.., column routine at
+0xf27e)</a></li>
+<li><a href="#4-intro-part-3---the-bouncing-head-0xff00-0xff8b"
+id="toc-4-intro-part-3---the-bouncing-head-0xff00-0xff8b">4. Intro, part
+3 - the bouncing head (0xff00, 0xff8b)</a></li>
+<li><a href="#5-palette-fades" id="toc-5-palette-fades">5. Palette
+fades</a></li>
+<li><a href="#6-the-player-screen" id="toc-6-the-player-screen">6. The
+player screen</a>
+<ul>
+<li><a href="#61-song-position-strip"
+id="toc-61-song-position-strip">6.1 Song position strip</a></li>
+<li><a href="#62-comment-and-title-text"
+id="toc-62-comment-and-title-text">6.2 Comment and title text</a></li>
+<li><a href="#63-vu-bars" id="toc-63-vu-bars">6.3 VU bars</a></li>
+<li><a href="#64-the-particle-field" id="toc-64-the-particle-field">6.4
+The particle field</a></li>
+<li><a href="#65-buttons-and-the-mouse"
+id="toc-65-buttons-and-the-mouse">6.5 Buttons and the mouse</a></li>
+<li><a href="#66-song-change" id="toc-66-song-change">6.6 Song
+change</a></li>
+</ul></li>
+<li><a href="#7-audio-not-original" id="toc-7-audio-not-original">7.
+Audio (not original)</a></li>
+<li><a href="#8-how-it-was-reverse-engineered"
+id="toc-8-how-it-was-reverse-engineered">8. How it was reverse
+engineered</a></li>
+<li><a href="#9-art-catalogue" id="toc-9-art-catalogue">9. Art
+catalogue</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1
+id="epidemic-renaissance--ice-1994---effects-display-tricks-and-what-is-exact">EPIDEMIC
+(Renaissance / iCE, 1994) - effects, display tricks and what is
+exact</h1>
+<p><em>Epidemic</em> is a <strong>music disk</strong>: 18 S3M tunes
+(three archives <code>EPIDEMIC.001/2/3</code>, 1.5 + 2.1 + 2.1 MB, plain
+concatenations of modules), an <code>EPIDEMIC.EXE</code> of 242,329
+bytes, a setup program and an NFO. Code: StarScream and DareDevil,
+concept Syntax Error, graphics Delsion, Ink, Pixel, Tran, Oman, ANSI
+Pnakotic (credits in <code>epidemic/EPIDEMIC.NFO</code>). The NFO asks
+for a 386/40, and the program supports GUS, Sound Blaster family,
+AudioTrix and PAS cards (the config written by <code>SETUP.EXE</code>
+sits in the last 10 bytes of the EXE).</p>
+<p>There is no 3D and no demo timeline here: the "effects" are a
+three-part intro, a player screen with VU bars and a particle field,
+palette fades, and a mouse cursor. Everything is drawn into the tweaked
+VGA mode X, and most of the interesting work is in how that mode is
+abused (section 1). This write-up describes what the JavaScript port
+(<code>web/index.html</code>) does, with the original code addresses
+taken from the unpacked image (see <code>REVERSE.md</code>; addresses
+are offsets in the unpacked 32-bit segment, "seg32"). The asm tricks are
+in <code>WRITEUP-asm.md</code>.</p>
+<h2 id="0-exact-against-approximated">0. Exact against approximated</h2>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Screens (player, help, ICE &amp; REN, logo, head), palettes, texts,
+song table, button hit boxes</td>
+<td><strong>extracted</strong> from the EXE
+(<code>tools/extract.py</code>), not redrawn</td>
+</tr>
+<tr>
+<td>Text glyphs and mouse sprites</td>
+<td>produced by running the <strong>real compiled blitters</strong>
+under the emulator, then stored as pixel lists</td>
+</tr>
+<tr>
+<td>Particle field</td>
+<td><strong>exact</strong>: the port's update rule reproduced 371
+consecutive recorded updates with zero differences
+(<code>REVERSE.md</code> section 6)</td>
+</tr>
+<tr>
+<td>VU bar geometry (position, pitch, height rule, colours)</td>
+<td>ported from the code (0x10969)</td>
+</tr>
+<tr>
+<td>VU levels</td>
+<td>rules reconstructed from the engine (0x3f09..0x4118); validated by a
+lock-step model: exact for the first 756 engine ticks of the intro tune,
+then one tick off (attributed to how the emulator injects the sound IRQ,
+not to a rule difference)</td>
+</tr>
+<tr>
+<td>VU levels against the audio</td>
+<td><strong>approximate in time</strong>: the port derives levels from
+pattern data at the order/row libopenmpt reports</td>
+</tr>
+<tr>
+<td>Intro (ICE &amp; REN scroll, gold zoom, head bounce)</td>
+<td>ported from the code (0xef83-0xf27d, 0xff00, 0xff8b); I did not find
+a frame-by-frame diff against emulator output in the repo</td>
+</tr>
+<tr>
+<td>Audio</td>
+<td><strong>not original</strong>: libopenmpt (windowed sinc) instead of
+the original S3M engine and Gravis Ultrasound mixing</td>
+</tr>
+<tr>
+<td>Fade lengths</td>
+<td>64 frames, as measured in the emulator (see 5)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-display-and-timing">1. Display and timing</h2>
+<ul>
+<li><strong>Mode X, 320x400, 256 colours.</strong> The program sets an
+unchained VGA mode (four 64 KB planes, byte mode), 80 bytes per row, 400
+rows. The canvas of the port is 320x400 and is shown in a 4:3 box
+(<code>aspect-ratio:4/3</code> in the CSS): a 4:3 monitor shows 320x400
+with pixels twice as tall as wide, so a real screenshot of the original
+is a 4:3 picture. A rendering at square pixels would be half as tall as
+it should.</li>
+<li><strong>Double buffering by CRTC start address.</strong> Two pages;
+the swap writes CRTC registers <code>0x0c/0x0d</code> (start address)
+from <code>[0x96ea]</code> / <code>[0x96ec]</code>, and the IRQ0 handler
+sets the vsync flag <code>[0x96d2]</code> that the main loop and the
+fade sequences wait on.</li>
+<li><strong>Time is the vertical retrace.</strong> The program
+reprograms the PIT and installs its own IRQ0 (0x9200) which calls the
+per-frame draw routine (0x106c5). The handler measures where the retrace
+is relative to the interrupt and nudges the PIT reload value so that
+IRQ0 stays phase-locked to vsync (see <code>WRITEUP-asm.md</code>,
+section 1). The port runs a 70 Hz frame loop with an accumulator
+(<code>FPS=70</code>, at most 5 catch-up frames).</li>
+<li><strong>Sequences are blocking code in the original.</strong> A song
+change, the help screen and every fade are loops that wait on the vsync
+flag. The port keeps that shape with a JS generator per sequence where
+one <code>yield</code> is one frame (<code>changeSong</code>,
+<code>helpScreen</code>, <code>intro</code>), and queues one pending key
+while a sequence runs - the original ignores keys while it blocks, one
+stays buffered.</li>
+</ul>
+<h2 id="2-intro-part-1---ice--ren-present-0xef83">2. Intro, part 1 -
+"ICE &amp; REN PRESENT" (0xef83..)</h2>
+<p>A 320x400 picture (128,000 bytes, LZ-packed in the overlay) is
+converted to planar and copied into video page 1 (VRAM offset
+<code>0x7d00</code> = 400 rows x 80 bytes). Then the CRTC start address
+is stepped by <code>0xa0</code> (two rows) per frame, 0 -&gt;
+<code>0x7d00</code>: exactly 200 steps. The picture therefore
+<strong>scrolls up into view without any pixel being copied</strong>,
+only two CRTC register writes per frame. While it scrolls the palette
+fades in; the loop then holds 100 frames and fades out.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// web/index.html, intro(): one frame per CRTC step</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(<span class="kw">let</span> f<span class="op">=</span><span class="dv">0</span><span class="op">;</span>f<span class="op">&lt;</span><span class="dv">200</span><span class="op">;</span>f<span class="op">++</span>){ tFade<span class="op">=</span>[META<span class="op">.</span><span class="at">pal</span><span class="op">.</span><span class="at">ice</span><span class="op">,</span><span class="st">&#39;in&#39;</span><span class="op">,</span><span class="bu">Math</span><span class="op">.</span><span class="fu">min</span>(<span class="dv">64</span><span class="op">,</span>f<span class="op">+</span><span class="dv">1</span>)]<span class="op">;</span> icY<span class="op">=</span><span class="dv">400</span><span class="op">-</span><span class="dv">2</span><span class="op">*</span>(f<span class="op">+</span><span class="dv">1</span>)<span class="op">;</span> <span class="kw">yield</span> }</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(<span class="kw">let</span> f<span class="op">=</span><span class="dv">0</span><span class="op">;</span>f<span class="op">&lt;</span><span class="dv">100</span><span class="op">;</span>f<span class="op">++</span>){ tFade<span class="op">=</span>[META<span class="op">.</span><span class="at">pal</span><span class="op">.</span><span class="at">ice</span><span class="op">,</span><span class="st">&#39;in&#39;</span><span class="op">,</span><span class="dv">64</span>]<span class="op">;</span> <span class="kw">yield</span> }</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(<span class="kw">let</span> t<span class="op">=</span><span class="dv">1</span><span class="op">;</span>t<span class="op">&lt;=</span><span class="dv">64</span><span class="op">;</span>t<span class="op">++</span>){ tFade<span class="op">=</span>[META<span class="op">.</span><span class="at">pal</span><span class="op">.</span><span class="at">ice</span><span class="op">,</span><span class="st">&#39;out&#39;</span><span class="op">,</span>t]<span class="op">;</span> <span class="kw">yield</span> }</span></code></pre></div>
+<p><em>Port</em>: the picture is blitted at
+<code>y = 400 - 2*(f+1)</code> into the 320x400 index buffer, which is
+the same thing as moving the start address. Its palette is the one at
+<code>0xbcb5</code> (the first guess, <code>0xc2b5</code>, was wrong;
+the live DAC dump settled it).</p>
+<h2
+id="3-intro-part-2---the-gold-epidemic-zoom-0xf130-column-routine-at-0xf27e">3.
+Intro, part 2 - the gold "EPIDEMIC" zoom (0xf130.., column routine at
+0xf27e)</h2>
+<p>This is the cleverest picture effect in the program and it uses no
+multiplication. The source is a 320x200 logo band (rows 111-160 contain
+the lettering). The CRTC is set up with:</p>
+<ul>
+<li>register <code>0x13</code> (offset) = <code>0xa0</code>: a virtual
+width of 1280 pixels (320 bytes per row);</li>
+<li>register <code>9</code> (max scan line) <code>|= 1</code>: every
+scan line is shown twice;</li>
+<li>sequencer map mask = <code>0xf</code>: a byte written to VRAM goes
+to <strong>all four planes</strong>, i.e. it makes 4 identical
+horizontal pixels.</li>
+</ul>
+<p>Each frame the code takes <strong>one column</strong> <code>x</code>
+of the logo and writes its 50 pixels (rows 111-160) down plane-byte
+column <code>x + 0x50</code>, <strong>four VRAM rows per source
+pixel</strong>. With map mask <code>0xf</code> every byte is 4 pixels
+wide, the 4-row repeat plus the doubled scan lines make each source
+pixel 4 px wide and 8 scan lines tall. Then the CRTC start address
+advances by one byte (4 pixels) per frame for 400 frames, which scrolls
+the band across the screen while it is still being drawn. After column
+319 the loop writes zeros so that the trail is cleared.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// intro(), part 2: V is the plane-byte memory (all planes get the same byte)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(<span class="kw">let</span> x<span class="op">=</span><span class="dv">0</span><span class="op">;</span>x<span class="op">&lt;</span><span class="dv">400</span><span class="op">;</span>x<span class="op">++</span>){</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(<span class="kw">let</span> r<span class="op">=</span><span class="dv">0</span><span class="op">;</span>r<span class="op">&lt;</span><span class="dv">50</span><span class="op">;</span>r<span class="op">++</span>) <span class="cf">for</span>(<span class="kw">let</span> k<span class="op">=</span><span class="dv">0</span><span class="op">;</span>k<span class="op">&lt;</span><span class="dv">4</span><span class="op">;</span>k<span class="op">++</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    V[(<span class="dv">4</span><span class="op">*</span>r<span class="op">+</span>k)<span class="op">*</span><span class="dv">320</span> <span class="op">+</span> x<span class="op">+</span><span class="bn">0x50</span>] <span class="op">=</span> x<span class="op">&lt;</span><span class="dv">320</span> <span class="op">?</span> LOGO[(<span class="dv">111</span><span class="op">+</span>r)<span class="op">*</span><span class="dv">320</span> <span class="op">+</span> x] <span class="op">:</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  gStart<span class="op">=</span>x<span class="op">+</span><span class="dv">1</span><span class="op">;</span> <span class="kw">yield</span> }</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">// drawGold(): what the VGA does with start address, doubled scan lines and 4-wide bytes</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>fb[y<span class="op">*</span>W<span class="op">+</span>x] <span class="op">=</span> V[(gStart <span class="op">+</span> (y<span class="op">&gt;&gt;</span><span class="dv">1</span>)<span class="op">*</span><span class="dv">320</span> <span class="op">+</span> (x<span class="op">&gt;&gt;</span><span class="dv">2</span>)) <span class="op">&amp;</span> <span class="bn">0xffff</span>]</span></code></pre></div>
+<p>The column routine (0xf27e) is a straight unrolled sequence: 50
+copies of "load one source byte, store it to four rows at
+<code>edi</code>, <code>edi+0x140</code>, <code>+0x280</code>,
+<code>+0x3c0</code>, step the source by 320 and the destination by
+0x500" (checked: 50 loads between 0xf28f and 0xf954), with a
+<code>cmp [0xef73],0x13f / ja</code> in front that switches to a
+zero-writing copy once the column index exceeds 319. <em>Port</em>: the
+whole effect, including what the doubled scan lines do, is reproduced by
+<code>drawGold</code>; I did not find a pixel diff against the emulator
+in the repository for this phase.</p>
+<h2 id="4-intro-part-3---the-bouncing-head-0xff00-0xff8b">4. Intro, part
+3 - the bouncing head (0xff00, 0xff8b)</h2>
+<p>A 320x200 chunky picture (the "graffiti head") is copied into VRAM
+rows 200-399, and the CRTC start row is animated: it starts at row 370
+and bounces on row 170, so the picture seems to fall onto the screen and
+bounce, and again nothing is copied after the first frame. The state is
+one 16.16 position and one 16.16 velocity:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode asm"><code class="sourceCode fasm"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ffb4:</span> <span class="bu">sub</span> <span class="dt">dword</span> <span class="op">[</span><span class="bn">0xef77</span><span class="op">],</span> <span class="bn">0x2000</span>      <span class="co">; vel -= 0.125   (gravity)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ffbe:</span> <span class="bu">mov</span> <span class="kw">eax</span><span class="op">,[</span><span class="bn">0xef77</span><span class="op">]</span> <span class="op">/</span> add <span class="op">[</span><span class="bn">0xef73</span><span class="op">],</span><span class="kw">eax</span>   <span class="co">; pos += vel</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ffc9:</span> <span class="bu">cmp</span> <span class="dt">dword</span> <span class="op">[</span><span class="bn">0xef73</span><span class="op">],</span> <span class="bn">0xaa0000</span>    <span class="co">; floor = row 170</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ffd5:</span> <span class="bu">mov</span> <span class="op">[</span><span class="bn">0xef73</span><span class="op">],</span> <span class="bn">0xaa0000</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ffdf:</span> <span class="bu">neg</span> <span class="dt">dword</span> <span class="op">[</span><span class="bn">0xef77</span><span class="op">]</span> <span class="op">/</span> sar <span class="dt">dword</span> <span class="op">[</span><span class="bn">0xef77</span><span class="op">],</span><span class="dv">3</span>   <span class="co">; vel = -vel/8 ...</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">fff1:</span> <span class="bu">mov</span> <span class="kw">ebx</span><span class="op">,</span><span class="dv">5</span> <span class="op">/</span> imul <span class="kw">ebx</span>                         <span class="co">; ... * 5   =&gt; restitution 5/8</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>hVel <span class="op">-=</span> <span class="bn">0x2000</span><span class="op">;</span> hPos <span class="op">+=</span> hVel<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (hPos <span class="op">&lt;=</span> <span class="bn">0xaa0000</span>) { hPos <span class="op">=</span> <span class="bn">0xaa0000</span><span class="op">;</span> hVel <span class="op">=</span> ((<span class="op">-</span>hVel)<span class="op">&gt;&gt;</span><span class="dv">3</span>)<span class="op">*</span><span class="dv">5</span> }</span></code></pre></div>
+<p>The start address written to the CRTC is
+<code>(pos &gt;&gt; 16) * 0x50</code> (row times 80 bytes). The loop
+runs 300 frames, then fades out. The initial values in the port
+(<code>hPos = 0x1720000</code> = row 370, <code>hVel = -0x20000</code>)
+come from the emulator trace. The bounce rule is a verbatim port; the
+integer <code>&gt;&gt;3</code> then <code>*5</code> order matters
+because it truncates differently from <code>*5/8</code>.</p>
+<h2 id="5-palette-fades">5. Palette fades</h2>
+<p>All fades work on a software copy of the 768-byte DAC and are run by
+the per-frame routine, not by the scene code. In the port:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> fade<span class="op">=</span>(base<span class="op">,</span>t<span class="op">,</span>out)<span class="kw">=&gt;</span>{ <span class="cf">for</span>(<span class="kw">let</span> i<span class="op">=</span><span class="dv">0</span><span class="op">;</span>i<span class="op">&lt;</span><span class="dv">768</span><span class="op">;</span>i<span class="op">++</span>) dac[i] <span class="op">=</span> out <span class="op">?</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">max</span>(<span class="dv">0</span><span class="op">,</span>base[i]<span class="op">-</span>t) <span class="op">:</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">min</span>(base[i]<span class="op">,</span>t) }</span></code></pre></div>
+<ul>
+<li><strong>Fade out</strong>: every component is decreased by the step
+with clamping to 0 (code at 0x1089a:
+<code>sub [esi],bl / jae / mov [esi],0</code>).</li>
+<li><strong>Fade in</strong>: the component is increased by the step and
+clamped to the target palette (0x108b5: <code>add [esi],bl</code>,
+<code>cmp [esi],[ebp]</code>, <code>jbe</code>, else store the target).
+Both start from the same buffers, so a fade in from black and a fade out
+of the same palette are mirror images.</li>
+<li><strong>Text fades</strong> act on a <em>sub-range</em> of the
+palette: the title and author colours are DAC entries
+<code>0xa0-0xaf</code>, the comment colours <code>0xca-0xcd</code>, and
+neither range is part of the screen's own palette (their values are fade
+targets at <code>0xa3a7</code> and <code>0xa40b</code>, merged in at
+draw time). So fading a title does not touch the picture.</li>
+<li><strong>Length</strong>: 64 frames per fade, as measured in the
+emulator. The routine at 0x10841 uploads the palette in two halves of
+128 entries (DAC index 0 and 128), alternating, and I did not re-derive
+the 64-frame count from that code by hand; I rely on the emulator
+measurement.</li>
+</ul>
+<h2 id="6-the-player-screen">6. The player screen</h2>
+<p>The screen is a pre-drawn 320x400 picture (four LZ-packed planes,
+<code>0x3274e..0x27f7c</code> from the end of the file) with the dynamic
+parts drawn over it each frame.</p>
+<h3 id="61-song-position-strip">6.1 Song position strip</h3>
+<p>32 cells of 8x4 pixels at (32,24); cell
+<code>floor(song*31/17)</code> is highlighted (colour <code>0x63</code>,
+others <code>0x6e</code>). 18 songs are spread over 32 cells, so some
+cells are never lit: the formula is <code>song*31/17</code>, not a
+mapping to equal cells.</p>
+<h3 id="62-comment-and-title-text">6.2 Comment and title text</h3>
+<p>Text uses two small fonts whose glyphs are <strong>compiled
+code</strong> (section 1 of the asm write-up). Advance is 5 px, a glyph
+is 12 rows, <code>\n</code> moves down 16 rows. Title at (94,236),
+author at (94,263), comment (up to 5 lines) at (80,37). The title font
+uses palette entries <code>0xa0 + row</code> (a vertical gradient inside
+the glyph); the comment font uses <code>0xcb-0xcd</code>. The port does
+not run any of this code: the glyph pixel lists were captured once by
+running the original blitter for every ASCII code, and
+<code>text()</code> replays them. Characters with no glyph (some
+box-drawing bars in comments) advance by 5 and draw nothing, like the
+original.</p>
+<h3 id="63-vu-bars">6.3 VU bars</h3>
+<p>Up to 16 bars (the original tests <code>[0x9499] &lt;= 16</code>), 8
+px wide, 12 px pitch, bar <code>k</code> at
+<code>x = 76 + 4*(16-n) + 12*k</code> (centred for <code>n</code>
+channels), growing upward from y = 122 on <strong>every other
+row</strong> (the pitch is <code>0xa0</code> bytes = two rows). Height
+in steps is <code>(level*0xb4)&gt;&gt;8</code>, colour
+<code>0xd3 + step</code>, and the rest of the 45 steps is cleared to
+0.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode asm"><code class="sourceCode fasm"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>109a0: <span class="bu">movzx</span> <span class="kw">eax</span><span class="op">,</span> <span class="dt">byte</span> <span class="op">[</span><span class="kw">esi</span><span class="op">+</span><span class="bn">0x1615</span><span class="op">]</span>   <span class="co">; level of channel esi</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>109a7: <span class="bu">mov</span> <span class="kw">ah</span><span class="op">,</span><span class="bn">0xb4</span> <span class="op">/</span> mul <span class="kw">ah</span> <span class="op">/</span> <span class="op">shr</span> <span class="kw">eax</span><span class="op">,</span><span class="dv">8</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>109b2: <span class="bu">mov</span> <span class="kw">al</span><span class="op">,</span><span class="bn">0xd3</span> <span class="op">/</span> mov <span class="kw">ah</span><span class="op">,</span><span class="kw">al</span>        <span class="co">; colour, duplicated: stosw writes 2 bytes</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>109b9: <span class="bu">stosw</span> <span class="op">/</span> sub <span class="kw">edi</span><span class="op">,</span><span class="bn">0xa2</span> <span class="op">/</span> inc <span class="kw">al</span> <span class="op">/</span> mov <span class="kw">ah</span><span class="op">,</span><span class="kw">al</span> <span class="op">/</span> loop <span class="dv">109</span><span class="er">b9</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> rows<span class="op">=</span>(level[c]<span class="op">*</span><span class="bn">0xb4</span>)<span class="op">&gt;&gt;</span><span class="dv">8</span><span class="op">;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(<span class="kw">let</span> j<span class="op">=</span><span class="dv">0</span><span class="op">;</span>j<span class="op">&lt;</span><span class="dv">45</span><span class="op">;</span>j<span class="op">++</span>) <span class="cf">for</span>(<span class="kw">let</span> x<span class="op">=</span><span class="dv">0</span><span class="op">;</span>x<span class="op">&lt;</span><span class="dv">8</span><span class="op">;</span>x<span class="op">++</span>) <span class="fu">dot</span>(x0<span class="op">+</span>x<span class="op">,</span> <span class="dv">122</span><span class="op">-</span><span class="dv">2</span><span class="op">*</span>j<span class="op">,</span> j<span class="op">&lt;</span>rows <span class="op">?</span> <span class="bn">0xd3</span><span class="op">+</span>j <span class="op">:</span> <span class="dv">0</span>)<span class="op">;</span></span></code></pre></div>
+<p>The bar is a stack of 8-pixel segments; with the map mask at
+<code>0xf</code> a single byte is 4 pixels, so <code>stosw</code> paints
+8 pixels in one instruction. The colours <code>0xd3..</code> are a
+gradient in the palette, so the bar changes colour with height.</p>
+<p><strong>Level rules</strong> (engine at 0x3f09..0x4118): the level is
+a byte per channel next to the running volume.</p>
+<ol type="1">
+<li>a row naming an instrument sets both to the instrument's default
+volume (table <code>0x2a6c</code>, equal to the S3M sample volume);</li>
+<li>a volume column sets both;</li>
+<li>a fine slide (<code>DxF</code>, <code>DFx</code>) is applied once at
+the row start;</li>
+<li>other <code>D/K/L</code> slides apply each engine tick after the
+first;</li>
+<li>every engine tick, the level decays by 1, saturating at 0
+(<code>sub [..],1 / adc [..],0</code>, 0x3ab2 and 0x1093b; see the asm
+write-up).</li>
+</ol>
+<p>Engine ticks run at <code>tempo*0.4</code> Hz (as in the port:
+<code>tickAcc += tempo*0.4/FPS</code>). The port computes them from the
+S3M pattern data (<code>web/s3m.js</code> reads orders, instrument
+volumes and events) at the row libopenmpt reports. Its approximations:
+the row is only known to the granularity of libopenmpt's progress
+callback, and the 70 Hz frame loop and the audio clock drift
+independently, so the bars follow the music but not tick-exactly. The
+original read the levels from its own mixer's state.</p>
+<h3 id="64-the-particle-field">6.4 The particle field</h3>
+<p>The panel under the title is a field of <strong>64
+particles</strong>, each a record of 9 words at <code>0xb521</code>:
+<code>colour, x, y, prevx, prevy, ax, ay, vx, vy</code>, with 16-bit
+unsigned positions and signed velocities and accelerations. Per frame,
+for each axis: add the velocity to the position; if the add overflowed
+the wrong way (see the asm write-up: the carry flag is the bounce test),
+negate the velocity and clamp the position; then add the acceleration to
+the velocity. So the particles are 64 bouncing balls in a 65536x65536
+box with x/y acceleration, drawn as <strong>one pixel each</strong> in a
+136x73 pixel window:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">// stepStars(), y axis (x is the same with 0 as the other wall)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> vy<span class="op">=</span><span class="fu">s16</span>(s<span class="op">.</span><span class="at">vy</span>)<span class="op">,</span> y<span class="op">=</span>s<span class="op">.</span><span class="at">y</span><span class="op">+</span><span class="fu">u16</span>(vy)<span class="op">,</span> cy<span class="op">=</span>y<span class="op">&gt;</span><span class="bn">0xffff</span><span class="op">;</span> y<span class="op">=</span><span class="fu">u16</span>(y)<span class="op">;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (vy<span class="op">&lt;</span><span class="dv">0</span> <span class="op">?</span> <span class="op">!</span>cy <span class="op">:</span> cy) { s<span class="op">.</span><span class="at">vy</span><span class="op">=</span><span class="fu">u16</span>(<span class="op">-</span>vy)<span class="op">;</span> y<span class="op">=</span><span class="bn">0xffff</span> }</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span><span class="at">y</span><span class="op">=</span>y<span class="op">;</span> s<span class="op">.</span><span class="at">vy</span><span class="op">=</span><span class="fu">u16</span>(s<span class="op">.</span><span class="at">vy</span><span class="op">+</span>s<span class="op">.</span><span class="at">ay</span>)<span class="op">;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">// screen position</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">dot</span>(<span class="dv">92</span> <span class="op">+</span> ((s<span class="op">.</span><span class="at">x</span><span class="op">*</span><span class="bn">0x88</span>)<span class="op">&gt;&gt;&gt;</span><span class="dv">16</span>)<span class="op">,</span> <span class="dv">282</span> <span class="op">+</span> ((s<span class="op">.</span><span class="at">y</span><span class="op">*</span><span class="bn">0x49</span>)<span class="op">&gt;&gt;&gt;</span><span class="dv">16</span>)<span class="op">,</span> s<span class="op">.</span><span class="at">c</span>)</span></code></pre></div>
+<p>The original erases each particle at its previous position (a second
+routine at 0x123ab clears the stored <code>prevx/prevy</code> with a
+single byte write) before drawing the new one. The port redraws the
+whole picture every frame so it has no erase. The initial table
+(colours, positions, velocities, accelerations) is read out of the EXE
+(<code>stars</code> in <code>meta.json</code>), so the motion is
+<strong>the original one</strong>, 371 frames verified.</p>
+<h3 id="65-buttons-and-the-mouse">6.5 Buttons and the mouse</h3>
+<p>Nine hit boxes (<code>y0,y1,x0,x1</code>, table at
+<code>0x96f5</code>) map onto the keys F2-F10; a click is tested at
+<code>(x+5, y)</code> of the cursor. The seven icons under the screen
+and the lower-right icon are 18 button sprites (normal/pressed pairs)
+stored as compiled blitters too, and extracted by running them. The
+cursor is a rat with 4 distinct frames (every move event advances a
+counter 0-7, two moves per frame), and a two-frame "gem" while a song
+loads (flag <code>[0xa3a1]</code>). The port draws the cursor in the
+index buffer (so it gets the original palette and the aspect ratio) and
+hides the system cursor.</p>
+<h3 id="66-song-change">6.6 Song change</h3>
+<p>The sequence at <code>0x10530</code> is blocking and reproduced as a
+generator: fade the title (64 frames), fade the comment (64), load the
+next module (busy cursor), a 2-frame wait, fade the title in, fade the
+comment in. Total about 256 frames (3.7 s at 70 Hz) plus the load,
+during which input is ignored.</p>
+<h2 id="7-audio-not-original">7. Audio (not original)</h2>
+<p>The original contains its own S3M player (pattern data converted to
+up to four effect words per cell, a jump table at <code>0x358b</code>)
+driving a Gravis Ultrasound or software mixing for the other cards. The
+port <strong>does not port it</strong>: libopenmpt (in an AudioWorklet
+through chiptune3, 8-tap windowed sinc, stereo separation 100) plays the
+18 modules, which were split out of the three archives at their
+<code>SCRM</code> signatures. This makes the sound different from the
+original (resampler, no GUS hardware model), but it gives the required
+pause and seek for free: pause = worklet pause; seeking is by order
+(F5/F6) through <code>setOrderRow</code>, rather than by absolute
+time.</p>
+<h2 id="8-how-it-was-reverse-engineered">8. How it was reverse
+engineered</h2>
+<ol type="1">
+<li><strong>Unpack the stub.</strong> <code>tools/unpack.py</code> runs
+the LZEXE-style stub in Unicorn (16-bit), applies the relocations and
+stops at the first instruction below the stub's segment. What it finds
+is a DOS32-style extender plus a flat 32-bit program, which is dumped at
+file-image offset <code>0x2630</code>.</li>
+<li><strong>Overlay resources</strong> are addressed from the end of the
+file and LZ-compressed with a small format (flag word of 16 bits, 12-bit
+distance, 4-bit length, <code>0xFF</code> ends); the decoder is
+<code>unlz</code> in <code>tools/extract.py</code>.</li>
+<li><strong>Run the real code.</strong> <code>tools/emu.py</code>
+emulates just enough of DOS32 services, mode X VGA (planes, map mask,
+CRTC start/offset, DAC, retrace bit), the PIT and the keyboard to run
+the program and the sound engine; glyphs and sprites are extracted by
+calling the program's own blitters in it, the DAC is dumped to identify
+palettes, and writes to the level bytes are logged to validate the VU
+rules. The Gravis card is stubbed (port <code>0x246</code> reports
+"timers fired").</li>
+<li><strong>Dead ends</strong>: a first S3M mixer written from the spec
+(replaced by libopenmpt), a wrong first palette guess, and early
+gold-phase frames that looked broken until the VGA model learned about
+CRTC virtual width and scan doubling.</li>
+</ol>
+<h2 id="9-art-catalogue">9. Art catalogue</h2>
+<p>There is no 3D in this demo: no mesh, no texture. All art is 2D,
+8-bit indexed, with 6-bit VGA palettes. "Colours" below is the number of
+distinct index values used in the extracted bitmap
+(<code>web/assets/*.bin</code>, counted), not the palette size (always
+256 entries of 3 x 6 bit = 768 bytes).</p>
+<table>
+<thead>
+<tr>
+<th>asset</th>
+<th>where</th>
+<th>format</th>
+<th>size</th>
+<th>colours used</th>
+<th>palette (seg32 offset)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>player screen (<code>main.bin</code>)</td>
+<td>overlay, four streams <code>0x3274e 0x2ef23 0x2b6f6 0x27f7c</code>
+from end of file</td>
+<td>LZ, 4 x 32000 mode-X planes, de-interleaved to 320x400 chunky by
+<code>planar()</code></td>
+<td>128,000</td>
+<td>121</td>
+<td><code>0xb9b5</code></td>
+</tr>
+<tr>
+<td>ICE &amp; REN PRESENT (<code>ice.bin</code>)</td>
+<td>overlay <code>0xb618</code></td>
+<td>LZ, 320x400 chunky</td>
+<td>128,000</td>
+<td>92</td>
+<td><code>0xbcb5</code></td>
+</tr>
+<tr>
+<td>help screen (<code>help.bin</code>)</td>
+<td>overlay <code>0x4996</code></td>
+<td>LZ, 320x400 chunky</td>
+<td>128,000</td>
+<td>35</td>
+<td><code>0xc8b5</code></td>
+</tr>
+<tr>
+<td>logo band (<code>logo.bin</code>)</td>
+<td>overlay <code>0x77ac</code></td>
+<td>LZ, 320x200 chunky; gold lettering in rows 111-160</td>
+<td>64,000</td>
+<td>76</td>
+<td><code>0xc2b5</code></td>
+</tr>
+<tr>
+<td>graffiti head (<code>head.bin</code>)</td>
+<td>overlay <code>0x68d2</code></td>
+<td>LZ, 320x200 chunky</td>
+<td>64,000</td>
+<td>67</td>
+<td><code>0xc5b5</code></td>
+</tr>
+<tr>
+<td>landscape, chrome scroller font, scroller code</td>
+<td>overlay <code>0x1a8a9</code>, <code>0x139fe</code>,
+<code>0x145eb</code></td>
+<td>LZ, 64000 / 64000 / 28209 bytes</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2 text fonts</td>
+<td>overlay <code>0x1f489</code> (0x23a0 bytes), <code>0x1ccf5</code>
+(0x244c bytes), raw</td>
+<td><strong>compiled x86 blitters</strong>, 8-byte header (length, width
+5, height 12, ascii) + code</td>
+<td>89 + 75 glyphs extracted (<code>meta.json</code>)</td>
+<td>title <code>0xa0+row</code>, comment <code>0xcb-0xcd</code></td>
+<td>targets <code>0xa3a7</code>, <code>0xa40b</code></td>
+</tr>
+<tr>
+<td>mouse cursor and buttons</td>
+<td>24 raw chunks of about 1 KB from <code>0x1d0e9</code></td>
+<td>compiled blitters; 6 cursor frames (rat 4, gem 2) + 18 button
+sprites (normal/pressed)</td>
+<td><code>meta.json</code> <code>sprites</code> (24 entries; the first
+cursor frame is 11x36)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>song table</td>
+<td>seg32 <code>0xa75f</code></td>
+<td>18 records of 4 pointers</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Decoding.</strong> The LZ streams use the format of
+<code>unlz</code> in <code>tools/extract.py</code> (flag bits per 16-bit
+word, 12-bit distance, length 3-18+, 0xFF ends); each stream's end is
+the next stream's start. The palettes are taken straight from seg32 of
+the unpacked image; the assignment of palette to picture was settled by
+dumping the live DAC in the emulator.</li>
+<li><strong>Fonts and sprites</strong> have no bitmaps in the file: the
+glyph in section "6.2" is code (<code>mov byte [edi], 0xa0+row</code>
+... <code>ret</code>). <code>tools/emu.py ... glyphs / sprites</code>
+calls each blitter in the emulator and reads the pixels back from the
+emulated VRAM; the port stores them as <code>[x, y, colour, ...]</code>
+lists (<code>-1</code> = untouched in sprites).</li>
+<li><strong>The landscape, chrome scroller font and scroller
+code</strong> (<code>HIYA! SYNTAX...</code>) are in the file but not
+reached in the normal flow; the port does not use them, and I did not
+decode them further.</li>
+<li><strong>Previews</strong> (rendered for this write-up from
+<code>web/assets/*.bin</code> and the palettes in
+<code>meta.json</code>, 6-bit values scaled to 8-bit; the 320x400
+pictures are shown at their native pixel size, not 4:3 corrected):</li>
+</ul>
+<p><img src="figures/main.png" alt="player screen, main.bin 320x400" />
+<img src="figures/ice.png"
+alt="ICE &amp; REN PRESENT, ice.bin 320x400" /> <img
+src="figures/help.png" alt="help screen, help.bin 320x400" /> <img
+src="figures/logo.png" alt="logo band, logo.bin 320x200" /> <img
+src="figures/head.png" alt="graffiti head, head.bin 320x200" /></p>
+<p>Palettes, 256 entries each (16 x 16 swatches, left to right: main,
+ice, help, logo, head):</p>
+<p><img src="figures/palettes.png" alt="palettes" /></p>
+<p>Title font, 89 glyphs (ASCII 33..126) read back from the compiled
+blitter, drawn as shape only in white (colour indices ignored), 3x:</p>
+<p><img src="figures/font_title.png" alt="title font" /></p>
+<p>Mouse cursor frames (cur0-3 rat, cur4-5 gem) and the 18 button
+sprites (normal/pressed pairs), 3x, drawn with the <code>main</code>
+palette (my choice; which palette the live DAC holds at that time was
+not checked here):</p>
+<p><img src="figures/sprites.png" alt="cursor and button sprites" /></p>
+<p>The comment font (75 glyphs) is not previewed: my first render of it
+showed gaps between rows that I did not investigate.</p>
+</body>
+</html>

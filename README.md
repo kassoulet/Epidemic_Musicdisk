@@ -80,3 +80,11 @@ Epidemic (c) 1994 Renaissance / iCE: code StarScream and DareDevil, concept Synt
 Pixel, Tran, Oman, ANSI Pnakotic; music by C.C.Catch, Basehead, Ryan Cramer, Daredevil, Edge, Leinad, Leviathan,
 Mellow-D, Mosaic, Necros, Nemesis, Purple Motion, Skaven (full list in `epidemic/EPIDEMIC.NFO`).
 Playback by libopenmpt via chiptune3. The original material belongs to its authors.
+
+## Write-ups on the site
+
+The write-ups are published as HTML next to the player (`web/writeups/`, generated from `WRITEUP-*.md` and the referenced `figures/`; needs pandoc). After editing a write-up, regenerate with:
+
+```
+../../tools/mkwriteups.sh . web    # shared script: demoports/tools/mkwriteups.sh REPO_DIR PUBLISH_SUBDIR
+```
